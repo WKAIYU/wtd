@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>简约亚克力导航</title>
     <style>
+        /* ===== 完整样式，确保卡片等所有元素正常 ===== */
         :root {
             --bg-gradient-1: #f0e6ff;
             --bg-gradient-2: #e6f0ff;
@@ -439,10 +440,12 @@
     </style>
 </head>
 <body>
+    <!-- 背景光晕 -->
     <div class="bg-orb bg-orb-1"></div>
     <div class="bg-orb bg-orb-2"></div>
     <div class="bg-orb bg-orb-3"></div>
 
+    <!-- 顶部导航 -->
     <nav class="top-nav" id="topNav">
         <a class="nav-brand" href="#" onclick="event.preventDefault(); scrollToTop();">
             <span class="brand-dot"></span>
@@ -454,6 +457,7 @@
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('section-social');">社交</a></li>
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('section-learn');">学习</a></li>
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('section-dev');">开发</a></li>
+            <!-- 登录/用户菜单 -->
             <li><a href="#" id="loginBtnHeader" onclick="openLogin();">登录</a></li>
             <li class="user-menu" id="userMenu" style="display:none;">
                 <span class="user-email" id="userEmail"></span>
@@ -466,6 +470,7 @@
         </button>
     </nav>
 
+    <!-- 登录弹窗 -->
     <div class="login-overlay" id="loginOverlay">
         <div class="login-card">
             <button class="close-btn" onclick="closeLogin();">✕</button>
@@ -482,13 +487,16 @@
         </div>
     </div>
 
+    <!-- 主容器 -->
     <div class="main-container">
+        <!-- Hero -->
         <div class="hero">
             <p class="greeting" id="greeting">下午好 ☀️</p>
             <h1>简约导航，优雅直达</h1>
             <p class="subtitle">精选常用网站，以亚克力质感呈现，让你在纯净界面中高效穿梭。</p>
         </div>
 
+        <!-- 搜索框 -->
         <div class="search-wrapper">
             <div class="search-box" id="searchBox">
                 <span class="search-icon">
@@ -514,6 +522,7 @@
             </div>
         </div>
 
+        <!-- 快捷标签 -->
         <div class="quick-tags">
             <a class="quick-tag" href="https://www.google.com" target="_blank">🌐 Google</a>
             <a class="quick-tag" href="https://www.youtube.com" target="_blank">📺 YouTube</a>
@@ -523,8 +532,10 @@
             <a class="quick-tag" href="https://www.figma.com" target="_blank">🎨 Figma</a>
         </div>
 
+        <!-- 导航卡片（由 JavaScript 动态渲染） -->
         <div class="nav-sections" id="navSections"></div>
 
+        <!-- 底部 -->
         <div class="footer">
             <div class="footer-links">
                 <a href="#" onclick="event.preventDefault(); scrollToTop();">返回顶部</a>
@@ -535,6 +546,7 @@
         </div>
     </div>
 
+    <!-- 主题切换按钮 -->
     <button class="theme-toggle" id="themeToggle" aria-label="切换深色模式" onclick="toggleTheme();">🌙</button>
 
     <!-- Supabase SDK -->
@@ -639,6 +651,8 @@
                 const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
                 if (error) throw error;
                 loginLoading.textContent = '✅ 登录成功';
+                // 关闭按钮启用
+                loginBtn.disabled = false;
             } catch (err) {
                 loginError.textContent = err.message;
                 loginLoading.textContent = '';
@@ -692,7 +706,7 @@
         });
 
         // ============================================================
-        // 5. 站点数据 + 渲染导航卡片
+        // 5. 站点数据 + 渲染导航卡片（核心修复部分）
         // ============================================================
         const siteData = {
             tools: {
@@ -751,20 +765,31 @@
 
         function renderSections() {
             const container = document.getElementById('navSections');
+            if (!container) {
+                console.error('navSections element not found!');
+                return;
+            }
             let html = '';
             const sectionIdMap = { tools:'section-tools', social:'section-social', learn:'section-learn', dev:'section-dev' };
             for (const [key, section] of Object.entries(siteData)) {
                 const sectionId = sectionIdMap[key] || 'section-'+key;
                 const count = section.sites.length;
-                html += `<div class="nav-section" id="${sectionId}"><div class="section-header"><span class="section-indicator"></span><h2>${section.icon} ${section.label}</h2><span class="section-count">${count} 个站点</span></div><div class="nav-grid">`;
+                html += `<div class="nav-section" id="${sectionId}">`;
+                html += `<div class="section-header"><span class="section-indicator"></span><h2>${section.icon} ${section.label}</h2><span class="section-count">${count} 个站点</span></div>`;
+                html += `<div class="nav-grid">`;
                 for (const site of section.sites) {
                     const domain = getDomain(site.url);
                     const fallbackChar = site.name.charAt(0).toUpperCase();
-                    html += `<a class="nav-card" href="${site.url}" target="_blank" rel="noopener"><div class="card-icon"><img class="site-icon" data-domain="${domain}" data-fallback="${fallbackChar}" alt="${site.name}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e0e0e0'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='16' text-anchor='middle' fill='%23666'%3E${fallbackChar}%3C/text%3E%3C/svg%3E"></div><div class="card-name">${site.name}</div><div class="card-desc">${site.desc}</div></a>`;
+                    html += `<a class="nav-card" href="${site.url}" target="_blank" rel="noopener">`;
+                    html += `<div class="card-icon"><img class="site-icon" data-domain="${domain}" data-fallback="${fallbackChar}" alt="${site.name}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e0e0e0'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='16' text-anchor='middle' fill='%23666'%3E${fallbackChar}%3C/text%3E%3C/svg%3E"></div>`;
+                    html += `<div class="card-name">${site.name}</div>`;
+                    html += `<div class="card-desc">${site.desc}</div>`;
+                    html += `</a>`;
                 }
                 html += `</div></div>`;
             }
             container.innerHTML = html;
+            // 加载图标
             loadAllIcons();
         }
 
@@ -895,16 +920,18 @@
         });
 
         // ============================================================
-        // 10. 初始化
+        // 10. 初始化（确保卡片渲染）
         // ============================================================
         initTheme();
         updateGreeting();
-        renderSections();
+        renderSections(); // 关键：调用渲染卡片
         setInterval(updateGreeting, 60000);
 
         const isMac = navigator.platform.toUpperCase().includes('MAC');
         const shortcut = document.querySelector('.search-shortcut');
         if (shortcut) shortcut.textContent = isMac ? '⌘ K' : 'Ctrl K';
+
+        console.log('✅ 导航页面已初始化，卡片应正常显示。');
     </script>
 </body>
 </html>
