@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>简约亚克力导航</title>
     <style>
-        /* ===== 完整样式，确保卡片等所有元素正常 ===== */
+        /* ===== 完整样式 ===== */
         :root {
             --bg-gradient-1: #f0e6ff;
             --bg-gradient-2: #e6f0ff;
@@ -554,35 +554,39 @@
 
     <script>
         // ============================================================
-        // 1. Supabase 配置（已替换为你的实际值）
+        // 1. Supabase 配置（使用 var 避免重复声明报错）
         // ============================================================
-        const SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
+        var SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
+        var SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 如果 supabase 已经存在，不再重复创建
+        if (typeof window.supabaseClient === 'undefined') {
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        var supabase = window.supabaseClient;
 
         // ============================================================
         // 2. DOM 引用
         // ============================================================
-        const loginBtnHeader = document.getElementById('loginBtnHeader');
-        const userMenu = document.getElementById('userMenu');
-        const userEmailSpan = document.getElementById('userEmail');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loginOverlay = document.getElementById('loginOverlay');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        const switchToLogin = document.getElementById('switchToLogin');
-        const loginTitle = document.getElementById('loginTitle');
-        const loginError = document.getElementById('loginError');
-        const loginLoading = document.getElementById('loginLoading');
+        var loginBtnHeader = document.getElementById('loginBtnHeader');
+        var userMenu = document.getElementById('userMenu');
+        var userEmailSpan = document.getElementById('userEmail');
+        var logoutBtn = document.getElementById('logoutBtn');
+        var loginOverlay = document.getElementById('loginOverlay');
+        var loginEmail = document.getElementById('loginEmail');
+        var loginPassword = document.getElementById('loginPassword');
+        var loginBtn = document.getElementById('loginBtn');
+        var registerBtn = document.getElementById('registerBtn');
+        var switchToLogin = document.getElementById('switchToLogin');
+        var loginTitle = document.getElementById('loginTitle');
+        var loginError = document.getElementById('loginError');
+        var loginLoading = document.getElementById('loginLoading');
 
         // ============================================================
         // 3. 登录状态监听
         // ============================================================
-        supabase.auth.onAuthStateChange((event, session) => {
-            const user = session?.user;
+        supabase.auth.onAuthStateChange(function(event, session) {
+            var user = session?.user;
             if (user) {
                 loginBtnHeader.style.display = 'none';
                 userMenu.style.display = 'flex';
@@ -596,7 +600,7 @@
 
         // 页面加载时检查当前会话
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            var _a = await supabase.auth.getSession(), session = _a.data.session;
             if (session?.user) {
                 loginBtnHeader.style.display = 'none';
                 userMenu.style.display = 'flex';
@@ -640,18 +644,17 @@
         window.closeLogin = closeLogin;
 
         // 登录
-        loginBtn.addEventListener('click', async () => {
-            const email = loginEmail.value.trim();
-            const pwd = loginPassword.value;
+        loginBtn.addEventListener('click', async function() {
+            var email = loginEmail.value.trim();
+            var pwd = loginPassword.value;
             if (!email || !pwd) { loginError.textContent = '请填写完整信息'; return; }
             loginError.textContent = '';
             loginLoading.textContent = '登录中...';
             loginBtn.disabled = true;
             try {
-                const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+                var error = (await supabase.auth.signInWithPassword({ email: email, password: pwd })).error;
                 if (error) throw error;
                 loginLoading.textContent = '✅ 登录成功';
-                // 关闭按钮启用
                 loginBtn.disabled = false;
             } catch (err) {
                 loginError.textContent = err.message;
@@ -666,15 +669,15 @@
                 setLoginMode('register');
                 return;
             }
-            const email = loginEmail.value.trim();
-            const pwd = loginPassword.value;
+            var email = loginEmail.value.trim();
+            var pwd = loginPassword.value;
             if (!email || !pwd) { loginError.textContent = '请填写完整信息'; return; }
             if (pwd.length < 6) { loginError.textContent = '密码至少6位'; return; }
             loginError.textContent = '';
             loginLoading.textContent = '注册中...';
             registerBtn.disabled = true;
             try {
-                const { error } = await supabase.auth.signUp({ email, password: pwd });
+                var error = (await supabase.auth.signUp({ email: email, password: pwd })).error;
                 if (error) throw error;
                 loginLoading.textContent = '✅ 注册成功，请登录';
                 setLoginMode('login');
@@ -687,28 +690,28 @@
         });
 
         // 切换到登录模式
-        switchToLogin.addEventListener('click', () => {
+        switchToLogin.addEventListener('click', function() {
             setLoginMode('login');
         });
 
         // 退出
-        logoutBtn.addEventListener('click', async (e) => {
+        logoutBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             await supabase.auth.signOut();
         });
 
         // 点击遮罩关闭
-        loginOverlay.addEventListener('click', (e) => {
+        loginOverlay.addEventListener('click', function(e) {
             if (e.target === loginOverlay) closeLogin();
         });
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeLogin();
         });
 
         // ============================================================
-        // 5. 站点数据 + 渲染导航卡片（核心修复部分）
+        // 5. 站点数据 + 渲染导航卡片
         // ============================================================
-        const siteData = {
+        var siteData = {
             tools: {
                 label: '常用工具',
                 icon: '🛠️',
@@ -764,64 +767,67 @@
         }
 
         function renderSections() {
-            const container = document.getElementById('navSections');
+            var container = document.getElementById('navSections');
             if (!container) {
                 console.error('navSections element not found!');
                 return;
             }
-            let html = '';
-            const sectionIdMap = { tools:'section-tools', social:'section-social', learn:'section-learn', dev:'section-dev' };
-            for (const [key, section] of Object.entries(siteData)) {
-                const sectionId = sectionIdMap[key] || 'section-'+key;
-                const count = section.sites.length;
-                html += `<div class="nav-section" id="${sectionId}">`;
-                html += `<div class="section-header"><span class="section-indicator"></span><h2>${section.icon} ${section.label}</h2><span class="section-count">${count} 个站点</span></div>`;
-                html += `<div class="nav-grid">`;
-                for (const site of section.sites) {
-                    const domain = getDomain(site.url);
-                    const fallbackChar = site.name.charAt(0).toUpperCase();
-                    html += `<a class="nav-card" href="${site.url}" target="_blank" rel="noopener">`;
-                    html += `<div class="card-icon"><img class="site-icon" data-domain="${domain}" data-fallback="${fallbackChar}" alt="${site.name}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e0e0e0'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='16' text-anchor='middle' fill='%23666'%3E${fallbackChar}%3C/text%3E%3C/svg%3E"></div>`;
-                    html += `<div class="card-name">${site.name}</div>`;
-                    html += `<div class="card-desc">${site.desc}</div>`;
-                    html += `</a>`;
+            var html = '';
+            var sectionIdMap = { tools:'section-tools', social:'section-social', learn:'section-learn', dev:'section-dev' };
+            for (var key in siteData) {
+                var section = siteData[key];
+                var sectionId = sectionIdMap[key] || 'section-'+key;
+                var count = section.sites.length;
+                html += '<div class="nav-section" id="' + sectionId + '">';
+                html += '<div class="section-header"><span class="section-indicator"></span><h2>' + section.icon + ' ' + section.label + '</h2><span class="section-count">' + count + ' 个站点</span></div>';
+                html += '<div class="nav-grid">';
+                for (var i = 0; i < section.sites.length; i++) {
+                    var site = section.sites[i];
+                    var domain = getDomain(site.url);
+                    var fallbackChar = site.name.charAt(0).toUpperCase();
+                    html += '<a class="nav-card" href="' + site.url + '" target="_blank" rel="noopener">';
+                    html += '<div class="card-icon"><img class="site-icon" data-domain="' + domain + '" data-fallback="' + fallbackChar + '" alt="' + site.name + '" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 32 32\'%3E%3Crect width=\'32\' height=\'32\' rx=\'6\' fill=\'%23e0e0e0\'/%3E%3Ctext x=\'16\' y=\'22\' font-family=\'system-ui\' font-size=\'16\' text-anchor=\'middle\' fill=\'%23666\'%3E' + fallbackChar + '%3C/text%3E%3C/svg%3E"></div>';
+                    html += '<div class="card-name">' + site.name + '</div>';
+                    html += '<div class="card-desc">' + site.desc + '</div>';
+                    html += '</a>';
                 }
-                html += `</div></div>`;
+                html += '</div></div>';
             }
             container.innerHTML = html;
-            // 加载图标
             loadAllIcons();
         }
 
         function loadAllIcons() {
-            document.querySelectorAll('.site-icon').forEach(img => {
-                const domain = img.dataset.domain;
-                if (!domain) return;
-                const clearbitUrl = `https://logo.clearbit.com/${domain}?size=64`;
+            var icons = document.querySelectorAll('.site-icon');
+            for (var i = 0; i < icons.length; i++) {
+                var img = icons[i];
+                var domain = img.dataset.domain;
+                if (!domain) continue;
+                var clearbitUrl = 'https://logo.clearbit.com/' + domain + '?size=64';
                 img.src = clearbitUrl;
                 img.onerror = function() {
                     this.onerror = null;
-                    this.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                    this.src = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=64';
                     this.onerror = function() { this.onerror = null; };
                 };
-            });
+            }
         }
 
         // ============================================================
         // 6. 主题切换
         // ============================================================
         function toggleTheme() {
-            const body = document.body;
-            const btn = document.getElementById('themeToggle');
+            var body = document.body;
+            var btn = document.getElementById('themeToggle');
             body.classList.toggle('dark');
-            const isDark = body.classList.contains('dark');
+            var isDark = body.classList.contains('dark');
             btn.textContent = isDark ? '☀️' : '🌙';
             localStorage.setItem('acrylic-nav-theme', isDark ? 'dark' : 'light');
         }
         window.toggleTheme = toggleTheme;
 
         function initTheme() {
-            const saved = localStorage.getItem('acrylic-nav-theme');
+            var saved = localStorage.getItem('acrylic-nav-theme');
             if (saved === 'dark') {
                 document.body.classList.add('dark');
                 document.getElementById('themeToggle').textContent = '☀️';
@@ -835,9 +841,9 @@
         // 7. 问候语
         // ============================================================
         function updateGreeting() {
-            const hour = new Date().getHours();
-            const el = document.getElementById('greeting');
-            let emoji, text;
+            var hour = new Date().getHours();
+            var el = document.getElementById('greeting');
+            var emoji, text;
             if (hour>=5 && hour<9) { emoji='🌅'; text='早上好'; }
             else if (hour>=9 && hour<12) { emoji='☀️'; text='上午好'; }
             else if (hour>=12 && hour<14) { emoji='🌤️'; text='中午好'; }
@@ -855,16 +861,16 @@
         }
         window.toggleMobileNav = toggleMobileNav;
 
-        document.querySelectorAll('.nav-links a').forEach(link => {
+        document.querySelectorAll('.nav-links a').forEach(function(link) {
             link.addEventListener('click', function() {
                 document.getElementById('navLinks').classList.remove('open');
-                document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+                document.querySelectorAll('.nav-links a').forEach(function(a) { a.classList.remove('active'); });
                 this.classList.add('active');
             });
         });
         document.addEventListener('click', function(e) {
-            const nav = document.getElementById('topNav');
-            const links = document.getElementById('navLinks');
+            var nav = document.getElementById('topNav');
+            var links = document.getElementById('navLinks');
             if (!nav.contains(e.target) && links.classList.contains('open')) {
                 links.classList.remove('open');
             }
@@ -876,19 +882,19 @@
         function scrollToTop() { window.scrollTo({ top:0, behavior:'smooth' }); }
         window.scrollToTop = scrollToTop;
         function scrollToSection(id) {
-            const el = document.getElementById(id);
+            var el = document.getElementById(id);
             if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
         }
         window.scrollToSection = scrollToSection;
         function focusSearch() { document.getElementById('searchInput').focus(); }
         window.focusSearch = focusSearch;
 
-        const searchInput = document.getElementById('searchInput');
-        const suggestBox = document.getElementById('searchSuggestions');
-        const engineSelect = document.getElementById('searchEngineSelect');
+        var searchInput = document.getElementById('searchInput');
+        var suggestBox = document.getElementById('searchSuggestions');
+        var engineSelect = document.getElementById('searchEngineSelect');
         searchInput.addEventListener('focus', function() { if(this.value.trim()==='') suggestBox.classList.add('show'); });
         searchInput.addEventListener('input', function() { if(this.value.trim()==='') suggestBox.classList.add('show'); else suggestBox.classList.remove('show'); });
-        document.querySelectorAll('.search-suggestion-item').forEach(item => {
+        document.querySelectorAll('.search-suggestion-item').forEach(function(item) {
             item.addEventListener('click', function() {
                 window.open(this.dataset.url, '_blank');
                 suggestBox.classList.remove('show');
@@ -908,10 +914,10 @@
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const q = this.value.trim();
+                var q = this.value.trim();
                 if (!q) return;
-                const engine = engineSelect.value;
-                const urls = { google:'https://www.google.com/search?q=', bing:'https://www.bing.com/search?q=', duckduckgo:'https://duckduckgo.com/?q=', baidu:'https://www.baidu.com/s?wd=' };
+                var engine = engineSelect.value;
+                var urls = { google:'https://www.google.com/search?q=', bing:'https://www.bing.com/search?q=', duckduckgo:'https://duckduckgo.com/?q=', baidu:'https://www.baidu.com/s?wd=' };
                 window.open((urls[engine]||urls.google) + encodeURIComponent(q), '_blank');
                 this.value = '';
                 suggestBox.classList.remove('show');
@@ -920,15 +926,15 @@
         });
 
         // ============================================================
-        // 10. 初始化（确保卡片渲染）
+        // 10. 初始化
         // ============================================================
         initTheme();
         updateGreeting();
-        renderSections(); // 关键：调用渲染卡片
+        renderSections();
         setInterval(updateGreeting, 60000);
 
-        const isMac = navigator.platform.toUpperCase().includes('MAC');
-        const shortcut = document.querySelector('.search-shortcut');
+        var isMac = navigator.platform.toUpperCase().includes('MAC');
+        var shortcut = document.querySelector('.search-shortcut');
         if (shortcut) shortcut.textContent = isMac ? '⌘ K' : 'Ctrl K';
 
         console.log('✅ 导航页面已初始化，卡片应正常显示。');
