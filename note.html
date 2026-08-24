@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的笔记 - 亚克力导航</title>
+    <style>
+        /* 复用 index.html 的完整样式，此处略去重复，实际部署时请将 index.html 的 <style> 完整复制到此处 */
+        /* 为保证代码独立，下面直接包含完整样式（与 index 完全一致） */
+        :root {
+            --bg-gradient-1: #f0e6ff;
+            --bg-gradient-2: #e6f0ff;
+            --bg-gradient-3: #ffe6f0;
+            --bg-gradient-4: #e6fff0;
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg-hover: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.65);
+            --glass-shadow: 0 8px 32px rgba(100, 80, 180, 0.1);
+            --glass-shadow-hover: 0 12px 40px rgba(100, 80, 180, 0.18);
+            --text-primary: #2d2a3e;
+            --text-secondary: #6b6580;
+            --text-light: #8e87a3;
+            --accent: #7c6bd6;
+            --accent-light: #a89be8;
+            --accent-bg: rgba(124, 107, 214, 0.08);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --radius-full: 50px;
+            --transition: 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2), var(--bg-gradient-3), var(--bg-gradient-4));
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease-in-out infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 24px 40px;
+            position: relative;
+            overflow-x: hidden;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        @keyframes gradientShift { 0%,100%{background-position:0% 50%;} 25%{background-position:50% 0%;} 50%{background-position:100% 50%;} 75%{background-position:50% 100%;} }
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 12s ease-in-out infinite alternate;
+            will-change: transform;
+        }
+        .bg-orb-1 { width:400px; height:400px; background:#d4c5f9; top:-100px; left:-100px; animation-delay:0s; }
+        .bg-orb-2 { width:350px; height:350px; background:#c5e0f9; bottom:-80px; right:-80px; animation-delay:-4s; }
+        .bg-orb-3 { width:280px; height:280px; background:#f9c5dd; top:40%; left:60%; animation-delay:-8s; }
+        @keyframes orbFloat { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(30px,-30px) scale(1.05);} 100%{transform:translate(-20px,20px) scale(0.97);} }
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            padding-top: 100px;
+        }
+        .top-nav {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: calc(100% - 48px);
+            max-width: 860px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-radius: var(--radius-full);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: var(--transition);
+        }
+        .top-nav:hover { background: var(--glass-bg-hover); box-shadow: var(--glass-shadow-hover); }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .nav-brand .brand-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent-light);
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{transform:scale(1); opacity:1;} 50%{transform:scale(1.4); opacity:0.7;} }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .nav-links li a {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .nav-links li a:hover { color: var(--text-primary); background: rgba(255,255,255,0.5); }
+        .nav-links li a.active { color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+        }
+        .nav-toggle span { display: block; width:22px; height:2.5px; border-radius:2px; background:var(--text-primary); transition:var(--transition); }
+        .nav-toggle:hover { background: rgba(255,255,255,0.4); }
+
+        /* 笔记页专用样式 */
+        .note-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-top: 100px;
+            position: relative;
+            z-index: 1;
+        }
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .note-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .note-header .note-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .note-header .note-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-full);
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(124,107,214,0.3);
+        }
+        .note-header .note-actions button:hover { transform: scale(1.03); }
+        .note-header .note-actions button.secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+        .note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .note-item {
+            padding: 20px 24px;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .note-item:hover { background: var(--glass-bg-hover); box-shadow: var(--glass-shadow-hover); }
+        .note-item .note-content {
+            flex: 1;
+            word-break: break-word;
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .note-item .note-time {
+            font-size: 12px;
+            color: var(--text-light);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .note-item .note-actions-btn {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .note-item .note-actions-btn button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-light);
+            transition: var(--transition);
+            padding: 4px 8px;
+        }
+        .note-item .note-actions-btn button:hover { color: var(--accent); }
+        .note-item .note-actions-btn button.danger:hover { color: #e86b7a; }
+
+        .empty-notes {
+            text-align: center;
+            color: var(--text-light);
+            padding: 40px 0;
+            font-size: 16px;
+        }
+
+        .edit-modal {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .edit-modal.open { display: flex; }
+        .edit-modal .edit-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow-hover);
+        }
+        .edit-modal .edit-card textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            font-size: 15px;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            resize: vertical;
+            outline: none;
+            transition: var(--transition);
+        }
+        .edit-modal .edit-card textarea:focus { border-color: var(--accent); background: rgba(255,255,255,0.5); }
+        .edit-modal .edit-card .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+        .edit-modal .edit-card .btn-group button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .edit-modal .edit-card .btn-group .save-btn {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(124,107,214,0.3);
+        }
+        .edit-modal .edit-card .btn-group .cancel-btn {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+        .edit-modal .edit-card .btn-group .save-btn:hover,
+        .edit-modal .edit-card .btn-group .cancel-btn:hover { transform: scale(1.03); }
+
+        body.dark .note-item { background: rgba(30,30,50,0.55); }
+        body.dark .edit-modal .edit-card { background: rgba(30,30,50,0.75); }
+        body.dark .edit-modal .edit-card textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #eeeaf5; }
+
+        .theme-toggle {
+            position:fixed; bottom:24px; right:24px; z-index:90;
+            width:48px; height:48px; border-radius:50%;
+            background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%);
+            border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            font-size:22px; transition:var(--transition);
+        }
+        .theme-toggle:hover { background:var(--glass-bg-hover); transform:scale(1.08) rotate(15deg); }
+
+        body.dark {
+            --bg-gradient-1:#1a1a2e; --bg-gradient-2:#16213e; --bg-gradient-3:#1a1a3e; --bg-gradient-4:#0f3460;
+            --glass-bg:rgba(30,30,50,0.55); --glass-bg-hover:rgba(40,40,65,0.75);
+            --glass-border:rgba(255,255,255,0.1);
+            --glass-shadow:0 8px 32px rgba(0,0,0,0.3); --glass-shadow-hover:0 12px 40px rgba(0,0,0,0.45);
+            --text-primary:#eeeaf5; --text-secondary:#b8b0cc; --text-light:#8a82a0;
+            --accent:#a89be8; --accent-light:#c4baf5; --accent-bg:rgba(168,155,232,0.15);
+        }
+        body.dark .bg-orb { opacity:0.3; }
+
+        @media (max-width:768px) {
+            body { padding:0 14px 32px; }
+            .note-container { padding-top: 84px; }
+            .note-header h1 { font-size: 22px; }
+            .note-item { flex-direction: column; align-items: stretch; }
+            .note-item .note-actions-btn { align-self: flex-end; }
+            .top-nav { width:calc(100% - 28px); padding:10px 16px; top:10px; }
+            .nav-links {
+                display:none; position:absolute; top:calc(100%+8px); left:0; right:0;
+                flex-direction:column; background:var(--glass-bg-hover);
+                backdrop-filter:blur(24px) saturate(180%);
+                border-radius:var(--radius-md); padding:10px;
+                border:1px solid var(--glass-border);
+                box-shadow:var(--glass-shadow-hover);
+                gap:4px;
+            }
+            .nav-links.open { display:flex; animation:fadeSlideDown 0.25s ease-out; }
+            .nav-links li a { display:block; padding:12px 16px; text-align:center; border-radius:var(--radius-sm); }
+            .nav-toggle { display:flex; }
+            .theme-toggle { bottom:16px; right:16px; width:42px; height:42px; font-size:18px; }
+        }
+        @media (max-width:380px) {
+            .note-item { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+
+    <nav class="top-nav" id="topNav">
+        <a class="nav-brand" href="index.html">
+            <span class="brand-dot"></span>
+            <span>Acrylic Nav</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="index.html">首页</a></li>
+            <li><a href="#" class="active">我的笔记</a></li>
+            <li><a href="#" id="logoutBtnNav" onclick="logout();">退出</a></li>
+        </ul>
+        <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open');">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <div class="main-container" style="padding-top:0;">
+        <div class="note-container">
+            <div class="note-header">
+                <h1>📝 我的笔记</h1>
+                <div class="note-actions">
+                    <button id="addNoteBtn">+ 添加笔记</button>
+                    <button class="secondary" onclick="location.href='index.html';">返回导航</button>
+                </div>
+            </div>
+            <div id="noteList" class="note-list">
+                <div class="empty-notes">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="edit-modal" id="editModal">
+        <div class="edit-card">
+            <textarea id="editTextarea" placeholder="写下你的笔记..."></textarea>
+            <div class="btn-group">
+                <button class="cancel-btn" onclick="closeEditModal();">取消</button>
+                <button class="save-btn" id="saveNoteBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme();">🌙</button>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // ============================================================
+        // 1. Supabase 配置（已替换为你的实际值）
+        // ============================================================
+        const SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // 2. DOM 引用
+        // ============================================================
+        const noteList = document.getElementById('noteList');
+        const addBtn = document.getElementById('addNoteBtn');
+        const editModal = document.getElementById('editModal');
+        const editText = document.getElementById('editTextarea');
+        const saveBtn = document.getElementById('saveNoteBtn');
+
+        let currentEditId = null; // null = 新增
+
+        // ============================================================
+        // 3. 登录检查 & 笔记监听
+        // ============================================================
+        let currentUser = null;
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            const user = session?.user;
+            if (!user) {
+                location.href = 'index.html';
+                return;
+            }
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                currentUser = user;
+                listenNotes(user.id);
+            }
+        });
+
+        // 页面加载时检查会话
+        async function initAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) {
+                location.href = 'index.html';
+                return;
+            }
+            currentUser = session.user;
+            listenNotes(session.user.id);
+        }
+        initAuth();
+
+        // ============================================================
+        // 4. 实时监听笔记（Realtime）
+        // ============================================================
+        let noteChannel = null;
+
+        function listenNotes(uid) {
+            // 清除旧订阅
+            if (noteChannel) {
+                supabase.removeChannel(noteChannel);
+            }
+
+            // 先查询一次
+            fetchNotes(uid);
+
+            // 创建 Realtime 订阅
+            noteChannel = supabase
+                .channel('notes-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'notes',
+                        filter: `uid=eq.${uid}`
+                    },
+                    () => {
+                        // 任何变更都重新拉取
+                        fetchNotes(uid);
+                    }
+                )
+                .subscribe();
+        }
+
+        // ============================================================
+        // 5. 获取笔记列表
+        // ============================================================
+        async function fetchNotes(uid) {
+            try {
+                const { data, error } = await supabase
+                    .from('notes')
+                    .select('*')
+                    .eq('uid', uid)
+                    .order('updated_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    noteList.innerHTML = '<div class="empty-notes">还没有笔记，点击“添加笔记”开始记录 ✨</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const note of data) {
+                    const time = note.updated_at
+                        ? new Date(note.updated_at).toLocaleString('zh-CN')
+                        : '';
+                    html += `
+                        <div class="note-item" data-id="${note.id}">
+                            <div class="note-content">${escapeHtml(note.content)}</div>
+                            <div class="note-time">${time}</div>
+                            <div class="note-actions-btn">
+                                <button onclick="editNote('${note.id}')" title="编辑">✏️</button>
+                                <button class="danger" onclick="deleteNote('${note.id}')" title="删除">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                noteList.innerHTML = html;
+            } catch (err) {
+                console.error('获取笔记失败:', err);
+                noteList.innerHTML = '<div class="empty-notes">加载笔记失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 6. 工具函数
+        // ============================================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // 7. 添加/编辑/删除笔记
+        // ============================================================
+        addBtn.addEventListener('click', () => {
+            currentEditId = null;
+            editText.value = '';
+            editModal.classList.add('open');
+        });
+
+        window.editNote = function(id) {
+            currentEditId = id;
+            // 从当前列表获取内容
+            const item = document.querySelector(`.note-item[data-id="${id}"] .note-content`);
+            if (item) {
+                editText.value = item.textContent;
+            } else {
+                editText.value = '';
+            }
+            editModal.classList.add('open');
+        };
+
+        window.deleteNote = async function(id) {
+            if (!confirm('确定要删除这条笔记吗？')) return;
+            try {
+                const { error } = await supabase
+                    .from('notes')
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+                // 删除成功，Realtime 会自动刷新列表
+            } catch (err) {
+                alert('删除失败: ' + err.message);
+            }
+        };
+
+        saveBtn.addEventListener('click', async () => {
+            const content = editText.value.trim();
+            if (!content) { alert('笔记内容不能为空'); return; }
+
+            try {
+                if (currentEditId) {
+                    // 更新
+                    const { error } = await supabase
+                        .from('notes')
+                        .update({
+                            content: content,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', currentEditId);
+                    if (error) throw error;
+                } else {
+                    // 新增
+                    const { error } = await supabase
+                        .from('notes')
+                        .insert({
+                            uid: currentUser.id,
+                            content: content,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        });
+                    if (error) throw error;
+                }
+                closeEditModal();
+            } catch (err) {
+                alert('保存失败: ' + err.message);
+            }
+        });
+
+        function closeEditModal() {
+            editModal.classList.remove('open');
+            currentEditId = null;
+        }
+        window.closeEditModal = closeEditModal;
+
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) closeEditModal();
+        });
+
+        // ============================================================
+        // 8. 退出
+        // ============================================================
+        window.logout = async function() {
+            await supabase.auth.signOut();
+            location.href = 'index.html';
+        };
+
+        // ============================================================
+        // 9. 主题切换（与 index 保持一致）
+        // ============================================================
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggle');
+            body.classList.toggle('dark');
+            const isDark = body.classList.contains('dark');
+            btn.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('acrylic-nav-theme', isDark ? 'dark' : 'light');
+        }
+        window.toggleTheme = toggleTheme;
+
+        function initTheme() {
+            const saved = localStorage.getItem('acrylic-nav-theme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark');
+                document.getElementById('themeToggle').textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark');
+                document.getElementById('themeToggle').textContent = '🌙';
+            }
+        }
+        initTheme();
+
+        // 移动端导航关闭
+        document.addEventListener('click', function(e) {
+            const nav = document.getElementById('topNav');
+            const links = document.getElementById('navLinks');
+            if (!nav.contains(e.target) && links.classList.contains('open')) {
+                links.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
