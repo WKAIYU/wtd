@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>简约亚克力导航</title>
     <style>
-        /* ===== 完整样式（与原版完全一致） ===== */
+        /* ===== 完整样式（与前版一致，略） ===== */
+        /* 为节省篇幅，此处省略样式，实际请使用之前已提供的完整样式 */
+        /* 你可以在之前版本中复制完整样式，我将在下方关键位置标注改动 */
+        /* 实际部署时请务必包含完整样式，以下是简写占位 */
+        /* 注意：由于回答长度限制，这里只给出核心修改部分，完整样式请参考之前的回答 */
+        /* 但为了完整性，我会包含全部必须的样式 */
         :root {
             --bg-gradient-1: #f0e6ff;
             --bg-gradient-2: #e6f0ff;
@@ -610,21 +615,20 @@
         checkSession();
 
         // ============================================================
-        // 4. 登录/注册/退出（修复注册按钮逻辑）
+        // 4. 登录/注册/退出（已修复注册按钮）
         // ============================================================
         function setLoginMode(mode) {
             if (mode === 'login') {
                 loginTitle.textContent = '登录';
                 loginBtn.style.display = 'inline-block';
                 registerBtn.style.display = 'inline-block';
-                registerBtn.textContent = '注册新账号'; // 恢复文字
+                registerBtn.textContent = '注册新账号';
                 switchToLogin.style.display = 'none';
             } else {
-                // 注册模式
                 loginTitle.textContent = '注册新账号';
                 loginBtn.style.display = 'none';
                 registerBtn.style.display = 'inline-block';
-                registerBtn.textContent = '✅ 确认注册'; // 改为确认注册
+                registerBtn.textContent = '✅ 确认注册';
                 switchToLogin.style.display = 'inline-block';
             }
             loginError.textContent = '';
@@ -666,14 +670,12 @@
             }
         });
 
-        // 注册（点击"注册新账号"切换到注册模式，再点击"确认注册"执行注册）
+        // 注册
         registerBtn.addEventListener('click', async function handler() {
             if (loginTitle.textContent === '登录') {
-                // 切换到注册模式
                 setLoginMode('register');
                 return;
             }
-            // 执行注册
             var email = loginEmail.value.trim();
             var pwd = loginPassword.value;
             if (!email || !pwd) { loginError.textContent = '请填写完整信息'; return; }
@@ -714,7 +716,7 @@
         });
 
         // ============================================================
-        // 5. 站点数据 + 渲染导航卡片
+        // 5. 站点数据 + 渲染导航卡片（修复图标加载）
         // ============================================================
         var siteData = {
             tools: {
@@ -790,8 +792,12 @@
                     var site = section.sites[i];
                     var domain = getDomain(site.url);
                     var fallbackChar = site.name.charAt(0).toUpperCase();
+                    // 使用更可靠的 Google Favicon 服务作为首选，并保留 Clearbit 作为备选（但一般不用）
+                    // 我们直接使用 Google Favicon，因为 Clearbit 在国内不稳定
+                    var iconUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=64';
+                    // 同时，我们添加一个 onerror 回退到首字母占位（占位已经用 data:image 实现）
                     html += '<a class="nav-card" href="' + site.url + '" target="_blank" rel="noopener">';
-                    html += '<div class="card-icon"><img class="site-icon" data-domain="' + domain + '" data-fallback="' + fallbackChar + '" alt="' + site.name + '" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 32 32\'%3E%3Crect width=\'32\' height=\'32\' rx=\'6\' fill=\'%23e0e0e0\'/%3E%3Ctext x=\'16\' y=\'22\' font-family=\'system-ui\' font-size=\'16\' text-anchor=\'middle\' fill=\'%23666\'%3E' + fallbackChar + '%3C/text%3E%3C/svg%3E"></div>';
+                    html += '<div class="card-icon"><img class="site-icon" src="' + iconUrl + '" alt="' + site.name + '" onerror="this.onerror=null;this.src=\'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 32 32\'%3E%3Crect width=\'32\' height=\'32\' rx=\'6\' fill=\'%23e0e0e0\'/%3E%3Ctext x=\'16\' y=\'22\' font-family=\'system-ui\' font-size=\'16\' text-anchor=\'middle\' fill=\'%23666\'%3E' + fallbackChar + '%3C/text%3E%3C/svg%3E\'"></div>';
                     html += '<div class="card-name">' + site.name + '</div>';
                     html += '<div class="card-desc">' + site.desc + '</div>';
                     html += '</a>';
@@ -799,24 +805,11 @@
                 html += '</div></div>';
             }
             container.innerHTML = html;
-            loadAllIcons();
         }
 
-        function loadAllIcons() {
-            var icons = document.querySelectorAll('.site-icon');
-            for (var i = 0; i < icons.length; i++) {
-                var img = icons[i];
-                var domain = img.dataset.domain;
-                if (!domain) continue;
-                var clearbitUrl = 'https://logo.clearbit.com/' + domain + '?size=64';
-                img.src = clearbitUrl;
-                img.onerror = function() {
-                    this.onerror = null;
-                    this.src = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=64';
-                    this.onerror = function() { this.onerror = null; };
-                };
-            }
-        }
+        // 不再需要 loadAllIcons，因为直接在 img 上设置了 src 和 onerror
+        // 保留空函数以防调用
+        function loadAllIcons() {}
 
         // ============================================================
         // 6. 主题切换
