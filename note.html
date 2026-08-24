@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>我的笔记 - 亚克力导航</title>
     <style>
-        /* ===== 完整样式，与 index.html 保持一致 ===== */
+        /* ===== 完整样式（与 index.html 统一） ===== */
         :root {
             --bg-gradient-1: #f0e6ff;
             --bg-gradient-2: #e6f0ff;
@@ -141,7 +141,7 @@
         .nav-toggle span { display: block; width:22px; height:2.5px; border-radius:2px; background:var(--text-primary); transition:var(--transition); }
         .nav-toggle:hover { background: rgba(255,255,255,0.4); }
 
-        /* 笔记页专用样式 */
+        /* ===== 笔记页专用样式 ===== */
         .note-container {
             width: 100%;
             max-width: 900px;
@@ -313,7 +313,6 @@
         }
         .theme-toggle:hover { background:var(--glass-bg-hover); transform:scale(1.08) rotate(15deg); }
 
-        /* 深色模式 */
         body.dark {
             --bg-gradient-1:#1a1a2e; --bg-gradient-2:#16213e; --bg-gradient-3:#1a1a3e; --bg-gradient-4:#0f3460;
             --glass-bg:rgba(30,30,50,0.55); --glass-bg-hover:rgba(40,40,65,0.75);
@@ -327,10 +326,12 @@
         body.dark .edit-modal .edit-card { background: rgba(30,30,50,0.75); }
         body.dark .edit-modal .edit-card textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #eeeaf5; }
 
-        /* 响应式 */
         @media (max-width:768px) {
             body { padding:0 14px 32px; }
-            .main-container { padding-top:84px; gap:28px; }
+            .note-container { padding-top: 84px; }
+            .note-header h1 { font-size: 22px; }
+            .note-item { flex-direction: column; align-items: stretch; }
+            .note-item .note-actions-btn { align-self: flex-end; }
             .top-nav { width:calc(100% - 28px); padding:10px 16px; top:10px; }
             .nav-links {
                 display:none; position:absolute; top:calc(100%+8px); left:0; right:0;
@@ -344,10 +345,6 @@
             .nav-links.open { display:flex; animation:fadeSlideDown 0.25s ease-out; }
             .nav-links li a { display:block; padding:12px 16px; text-align:center; border-radius:var(--radius-sm); }
             .nav-toggle { display:flex; }
-            .note-container { padding-top: 84px; }
-            .note-header h1 { font-size: 22px; }
-            .note-item { flex-direction: column; align-items: stretch; }
-            .note-item .note-actions-btn { align-self: flex-end; }
             .theme-toggle { bottom:16px; right:16px; width:42px; height:42px; font-size:18px; }
         }
         @media (max-width:380px) {
@@ -361,7 +358,7 @@
     <div class="bg-orb bg-orb-2"></div>
     <div class="bg-orb bg-orb-3"></div>
 
-    <!-- 顶部导航 -->
+    <!-- 导航栏 -->
     <nav class="top-nav" id="topNav">
         <a class="nav-brand" href="index.html">
             <span class="brand-dot"></span>
@@ -404,7 +401,7 @@
         </div>
     </div>
 
-    <!-- 主题切换按钮 -->
+    <!-- 主题切换 -->
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme();">🌙</button>
 
     <!-- Supabase SDK -->
@@ -412,32 +409,36 @@
 
     <script>
         // ============================================================
-        // 1. Supabase 配置（替换为你的实际值）
+        // 1. Supabase 配置
         // ============================================================
-        const SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
+        var SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
+        var SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 避免重复初始化
+        if (typeof window.supabaseClient === 'undefined') {
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        var supabase = window.supabaseClient;
 
         // ============================================================
         // 2. DOM 引用
         // ============================================================
-        const noteList = document.getElementById('noteList');
-        const addBtn = document.getElementById('addNoteBtn');
-        const editModal = document.getElementById('editModal');
-        const editText = document.getElementById('editTextarea');
-        const saveBtn = document.getElementById('saveNoteBtn');
+        var noteList = document.getElementById('noteList');
+        var addBtn = document.getElementById('addNoteBtn');
+        var editModal = document.getElementById('editModal');
+        var editText = document.getElementById('editTextarea');
+        var saveBtn = document.getElementById('saveNoteBtn');
 
-        let currentEditId = null; // null 表示新增
+        var currentEditId = null; // null = 新增
+        var currentUser = null;
 
         // ============================================================
-        // 3. 登录检查 & 笔记监听
+        // 3. 登录检查
         // ============================================================
-        let currentUser = null;
-
-        supabase.auth.onAuthStateChange((event, session) => {
-            const user = session?.user;
+        supabase.auth.onAuthStateChange(function(event, session) {
+            var user = session?.user;
             if (!user) {
+                // 未登录跳转回首页
                 location.href = 'index.html';
                 return;
             }
@@ -449,7 +450,7 @@
 
         // 页面加载时检查会话
         async function initAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
+            var _a = await supabase.auth.getSession(), session = _a.data.session;
             if (!session?.user) {
                 location.href = 'index.html';
                 return;
@@ -460,9 +461,9 @@
         initAuth();
 
         // ============================================================
-        // 4. 实时监听笔记（Realtime）
+        // 4. 监听笔记（Realtime）
         // ============================================================
-        let noteChannel = null;
+        var noteChannel = null;
 
         function listenNotes(uid) {
             // 清除旧订阅
@@ -482,14 +483,16 @@
                         event: '*',
                         schema: 'public',
                         table: 'notes',
-                        filter: `uid=eq.${uid}`
+                        filter: 'uid=eq.' + uid
                     },
-                    () => {
+                    function() {
                         // 任何变更都重新拉取
                         fetchNotes(uid);
                     }
                 )
-                .subscribe();
+                .subscribe(function(status) {
+                    console.log('Realtime 订阅状态:', status);
+                });
         }
 
         // ============================================================
@@ -497,64 +500,73 @@
         // ============================================================
         async function fetchNotes(uid) {
             try {
-                const { data, error } = await supabase
+                console.log('正在获取笔记，用户ID:', uid);
+                var result = await supabase
                     .from('notes')
                     .select('*')
                     .eq('uid', uid)
                     .order('updated_at', { ascending: false });
 
-                if (error) throw error;
+                var error = result.error;
+                var data = result.data;
 
-                if (!data || data.length === 0) {
-                    noteList.innerHTML = '<div class="empty-notes">还没有笔记，点击“添加笔记”开始记录 ✨</div>';
+                if (error) {
+                    console.error('获取笔记失败:', error);
+                    noteList.innerHTML = '<div class="empty-notes">❌ 加载笔记失败: ' + error.message + '</div>';
                     return;
                 }
 
-                let html = '';
-                for (const note of data) {
-                    const time = note.updated_at
+                console.log('获取到笔记数量:', data ? data.length : 0);
+
+                if (!data || data.length === 0) {
+                    noteList.innerHTML = '<div class="empty-notes">✨ 还没有笔记，点击“添加笔记”开始记录</div>';
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < data.length; i++) {
+                    var note = data[i];
+                    var time = note.updated_at
                         ? new Date(note.updated_at).toLocaleString('zh-CN')
                         : '';
-                    html += `
-                        <div class="note-item" data-id="${note.id}">
-                            <div class="note-content">${escapeHtml(note.content)}</div>
-                            <div class="note-time">${time}</div>
-                            <div class="note-actions-btn">
-                                <button onclick="editNote('${note.id}')" title="编辑">✏️</button>
-                                <button class="danger" onclick="deleteNote('${note.id}')" title="删除">🗑️</button>
-                            </div>
-                        </div>
-                    `;
+                    // 转义 HTML 防止 XSS
+                    var content = note.content || '';
+                    // 使用 textContent 方式转义
+                    var div = document.createElement('div');
+                    div.textContent = content;
+                    var safeContent = div.innerHTML;
+
+                    html += '<div class="note-item" data-id="' + note.id + '">';
+                    html += '<div class="note-content">' + safeContent + '</div>';
+                    html += '<div class="note-time">' + time + '</div>';
+                    html += '<div class="note-actions-btn">';
+                    html += '<button onclick="editNote(\'' + note.id + '\')" title="编辑">✏️</button>';
+                    html += '<button class="danger" onclick="deleteNote(\'' + note.id + '\')" title="删除">🗑️</button>';
+                    html += '</div></div>';
                 }
                 noteList.innerHTML = html;
             } catch (err) {
-                console.error('获取笔记失败:', err);
-                noteList.innerHTML = '<div class="empty-notes">加载笔记失败，请刷新重试</div>';
+                console.error('获取笔记异常:', err);
+                noteList.innerHTML = '<div class="empty-notes">❌ 加载笔记失败，请刷新重试</div>';
             }
         }
 
         // ============================================================
-        // 6. 工具函数
+        // 6. 添加笔记
         // ============================================================
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // ============================================================
-        // 7. 添加/编辑/删除笔记
-        // ============================================================
-        addBtn.addEventListener('click', () => {
+        addBtn.addEventListener('click', function() {
             currentEditId = null;
             editText.value = '';
             editModal.classList.add('open');
         });
 
+        // ============================================================
+        // 7. 编辑笔记
+        // ============================================================
         window.editNote = function(id) {
             currentEditId = id;
             // 从当前列表获取内容
-            const item = document.querySelector(`.note-item[data-id="${id}"] .note-content`);
+            var item = document.querySelector('.note-item[data-id="' + id + '"] .note-content');
             if (item) {
                 editText.value = item.textContent;
             } else {
@@ -563,38 +575,67 @@
             editModal.classList.add('open');
         };
 
+        // ============================================================
+        // 8. 删除笔记
+        // ============================================================
         window.deleteNote = async function(id) {
             if (!confirm('确定要删除这条笔记吗？')) return;
             try {
-                const { error } = await supabase
+                console.log('正在删除笔记，ID:', id);
+                var result = await supabase
                     .from('notes')
                     .delete()
                     .eq('id', id);
-                if (error) throw error;
-                // 删除成功，Realtime 会自动刷新列表
+                if (result.error) {
+                    console.error('删除失败:', result.error);
+                    alert('删除失败: ' + result.error.message);
+                } else {
+                    console.log('删除成功');
+                }
             } catch (err) {
+                console.error('删除异常:', err);
                 alert('删除失败: ' + err.message);
             }
         };
 
-        saveBtn.addEventListener('click', async () => {
-            const content = editText.value.trim();
-            if (!content) { alert('笔记内容不能为空'); return; }
+        // ============================================================
+        // 9. 保存笔记（新增或更新）
+        // ============================================================
+        saveBtn.addEventListener('click', async function() {
+            var content = editText.value.trim();
+            if (!content) {
+                alert('笔记内容不能为空');
+                return;
+            }
+
+            // 确保当前用户存在
+            if (!currentUser) {
+                alert('请先登录');
+                return;
+            }
 
             try {
                 if (currentEditId) {
-                    // 更新
-                    const { error } = await supabase
+                    // 更新现有笔记
+                    console.log('正在更新笔记，ID:', currentEditId);
+                    var result = await supabase
                         .from('notes')
                         .update({
                             content: content,
                             updated_at: new Date().toISOString()
                         })
                         .eq('id', currentEditId);
-                    if (error) throw error;
+
+                    if (result.error) {
+                        console.error('更新失败:', result.error);
+                        alert('更新失败: ' + result.error.message);
+                        return;
+                    }
+                    console.log('更新成功');
                 } else {
-                    // 新增
-                    const { error } = await supabase
+                    // 新增笔记
+                    console.log('正在新增笔记，用户ID:', currentUser.id);
+                    var result = await supabase
                         .from('notes')
                         .insert({
                             uid: currentUser.id,
@@ -602,26 +643,36 @@
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                         });
-                    if (error) throw error;
+
+                    if (result.error) {
+                        console.error('新增失败:', result.error);
+                        alert('新增失败: ' + result.error.message);
+                        return;
+                    }
+                    console.log('新增成功');
                 }
                 closeEditModal();
             } catch (err) {
+                console.error('保存异常:', err);
                 alert('保存失败: ' + err.message);
             }
         });
 
+        // ============================================================
+        // 10. 关闭编辑模态框
+        // ============================================================
         function closeEditModal() {
             editModal.classList.remove('open');
             currentEditId = null;
         }
         window.closeEditModal = closeEditModal;
 
-        editModal.addEventListener('click', (e) => {
+        editModal.addEventListener('click', function(e) {
             if (e.target === editModal) closeEditModal();
         });
 
         // ============================================================
-        // 8. 退出
+        // 11. 退出
         // ============================================================
         window.logout = async function() {
             await supabase.auth.signOut();
@@ -629,20 +680,20 @@
         };
 
         // ============================================================
-        // 9. 主题切换（与 index 保持一致）
+        // 12. 主题切换
         // ============================================================
         function toggleTheme() {
-            const body = document.body;
-            const btn = document.getElementById('themeToggle');
+            var body = document.body;
+            var btn = document.getElementById('themeToggle');
             body.classList.toggle('dark');
-            const isDark = body.classList.contains('dark');
+            var isDark = body.classList.contains('dark');
             btn.textContent = isDark ? '☀️' : '🌙';
             localStorage.setItem('acrylic-nav-theme', isDark ? 'dark' : 'light');
         }
         window.toggleTheme = toggleTheme;
 
         function initTheme() {
-            const saved = localStorage.getItem('acrylic-nav-theme');
+            var saved = localStorage.getItem('acrylic-nav-theme');
             if (saved === 'dark') {
                 document.body.classList.add('dark');
                 document.getElementById('themeToggle').textContent = '☀️';
@@ -655,12 +706,14 @@
 
         // 移动端导航关闭
         document.addEventListener('click', function(e) {
-            const nav = document.getElementById('topNav');
-            const links = document.getElementById('navLinks');
+            var nav = document.getElementById('topNav');
+            var links = document.getElementById('navLinks');
             if (!nav.contains(e.target) && links.classList.contains('open')) {
                 links.classList.remove('open');
             }
         });
+
+        console.log('✅ 笔记页面已初始化');
     </script>
 </body>
 </html>
