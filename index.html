@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>简约亚克力导航</title>
     <style>
-        /* ===== 完整样式 ===== */
+        /* ===== 完整样式（与原版完全一致） ===== */
         :root {
             --bg-gradient-1: #f0e6ff;
             --bg-gradient-2: #e6f0ff;
@@ -532,7 +532,7 @@
             <a class="quick-tag" href="https://www.figma.com" target="_blank">🎨 Figma</a>
         </div>
 
-        <!-- 导航卡片（由 JavaScript 动态渲染） -->
+        <!-- 导航卡片 -->
         <div class="nav-sections" id="navSections"></div>
 
         <!-- 底部 -->
@@ -554,12 +554,12 @@
 
     <script>
         // ============================================================
-        // 1. Supabase 配置（使用 var 避免重复声明报错）
+        // 1. Supabase 配置
         // ============================================================
         var SUPABASE_URL = 'https://lnlflwxhftpznkvgiobg.supabase.co';
         var SUPABASE_ANON_KEY = 'sb_publishable_zldBIjp2x7xxsGU1-FBGaA_GtV3V0AW';
 
-        // 如果 supabase 已经存在，不再重复创建
+        // 避免重复初始化
         if (typeof window.supabaseClient === 'undefined') {
             window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
@@ -610,18 +610,21 @@
         checkSession();
 
         // ============================================================
-        // 4. 登录/注册/退出
+        // 4. 登录/注册/退出（修复注册按钮逻辑）
         // ============================================================
         function setLoginMode(mode) {
             if (mode === 'login') {
                 loginTitle.textContent = '登录';
                 loginBtn.style.display = 'inline-block';
                 registerBtn.style.display = 'inline-block';
+                registerBtn.textContent = '注册新账号'; // 恢复文字
                 switchToLogin.style.display = 'none';
             } else {
+                // 注册模式
                 loginTitle.textContent = '注册新账号';
                 loginBtn.style.display = 'none';
-                registerBtn.style.display = 'none';
+                registerBtn.style.display = 'inline-block';
+                registerBtn.textContent = '✅ 确认注册'; // 改为确认注册
                 switchToLogin.style.display = 'inline-block';
             }
             loginError.textContent = '';
@@ -663,12 +666,14 @@
             }
         });
 
-        // 注册
+        // 注册（点击"注册新账号"切换到注册模式，再点击"确认注册"执行注册）
         registerBtn.addEventListener('click', async function handler() {
             if (loginTitle.textContent === '登录') {
+                // 切换到注册模式
                 setLoginMode('register');
                 return;
             }
+            // 执行注册
             var email = loginEmail.value.trim();
             var pwd = loginPassword.value;
             if (!email || !pwd) { loginError.textContent = '请填写完整信息'; return; }
